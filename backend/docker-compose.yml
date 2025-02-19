@@ -1,0 +1,31 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_container
+    networks:
+      - app-network
+    environment:
+      - DATABASE_URL=postgresql://myuser:Issar2005%23@postgres_container:5432/code_review
+
+  postgres_container:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=Issar2005#
+      - POSTGRES_DB=code_review
+    ports:
+      - "5433:5432"
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
