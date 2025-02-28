@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends
 from databases import Database
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
+from app.models import CodeReview
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,14 +17,12 @@ app = FastAPI()
 # Connect to the database
 database = Database(DATABASE_URL)
 
-# Dependency for getting the database session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_reviews(db: Session):
+    return db.query(CodeReview).all()
 
-@app.get("/")
-async def read_root(db: Session = Depends(get_db)):
-    return {"message": "Connected to database"}
+def create_review(db: Session, title: str, feedback: str, reviewer: str):
+    new_review = CodeReview(title=title, feedback=feedback, reviewer=reviewer)
+    db.add(new_review)
+    db.commit()
+    db.refresh(new_review)
+    return new_review
