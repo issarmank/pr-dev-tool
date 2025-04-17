@@ -9,16 +9,18 @@ export default function Component() {
   return (
     <div className="auth-container h-screen bg-blue-200">
       <nav className='flex justify-between items-center bg-[#e74c3c] p-4'>
-      {session && (
-          <>
-            <Link href="/open-prs" className="font-comic hover:text-blue-600 ml-20 font-bold">
-              Open Pull Requests
-            </Link>
-            <Link href="/past-reviews" className="font-comic hover:text-blue-600 mr-20 font-bold">
-              Past Code Reviews
-            </Link>
-          </>
-        )}
+        <div className="flex space-x-8 ml-10">
+        {session && (
+            <>
+              <Link href="/open-prs" className="font-comic hover:text-blue-600 font-bold">
+                Open Pull Requests
+             </Link>
+              <Link href="/past-reviews" className="font-comic hover:text-blue-600 font-bold">
+                Past Code Reviews
+              </Link>
+            </>
+          )}
+        </div>
       </nav>
       <h1 className='text-center text-2xl transform translate-y-60 font-comic font-bold'>Welcome to the Code Review Tool</h1>
       {session ? (
