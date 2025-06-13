@@ -62,9 +62,29 @@ export default function OpenPullRequests() {
       }
 
       const data = await response.json();
+      const reviewContent = data.result;
+
+      // Save the review to localStorage
+      const review = {
+        prId,
+        prTitle,
+        prUrl,
+        reviewContent,
+        timestamp: new Date().toISOString()
+      };
+
+      // Get existing reviews
+      const existingReviews = JSON.parse(localStorage.getItem('prReviews') || '[]');
+      
+      // Add new review
+      const updatedReviews = [review, ...existingReviews];
+      
+      // Save back to localStorage
+      localStorage.setItem('prReviews', JSON.stringify(updatedReviews));
+
       setReviewSuggestions((prev) => ({
         ...prev,
-        [prId]: data.result,
+        [prId]: reviewContent,
       }));
     } catch (error) {
       console.error('Error fetching review suggestions:', error);
