@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.56.0",
     "@tailwindcss/typography": "^0.5.16",
     "next": "^15.2.0",
     "next-auth": "^4.24.11",
@@ -16,7 +17,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "react-syntax-highlighter": "^6.0.0"
+    "react-syntax-highlighter": "^5.8.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
