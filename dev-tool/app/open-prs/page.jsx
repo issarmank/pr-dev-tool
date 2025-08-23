@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
+import { saveReview, getUserReviews, getReviewByPrId } from '../../lib/database';
 
 export default function OpenPullRequests() {
   const { data: session } = useSession();
@@ -11,9 +12,35 @@ export default function OpenPullRequests() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedPR, setSelectedPR] = useState(null);
+  const [saveStatus, setSaveStatus] = useState({});
+
+  // Load existing reviews when component mounts
+  useEffect(() => {
+    async function loadExistingReviews() {
+      if (!session?.user?.email) return;
+      
+      try {
+        const result = await getUserReviews(session.user.email);
+        if (result.success) {
+          const existingReviews = {};
+          result.data.forEach(review => {
+            existingReviews[review.pr_id] = review.review_content;
+            setSaveStatus(prev => ({ ...prev, [review.pr_id]: 'saved' }));
+          });
+          setReviewSuggestions(existingReviews);
+        }
+      } catch (error) {
+        console.error('Error loading existing reviews:', error);
+      }
+    }
+
+    loadExistingReviews();
+  }, [session]);
 
   useEffect(() => {
     async function fetchPRs() {
+      if (!session?.accessToken) return;
+      
       try {
         const response = await fetch('https://api.github.com/search/issues?q=is:pr+is:open+author:@me', {
           headers: {
@@ -40,11 +67,33 @@ export default function OpenPullRequests() {
   }, [session]);
 
   async function handleReview(prId, prTitle, prUrl) {
+    // Security check
+    if (!session?.user?.email) {
+      setError('Please log in to review pull requests.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSelectedPR(prId);
+    setSaveStatus(prev => ({ ...prev, [prId]: 'reviewing' }));
     
     try {
+      // Check if review already exists
+      const existingReview = await getReviewByPrId(prId, session.user.email);
+      
+      if (existingReview.success && existingReview.data) {
+        // Use existing review
+        setReviewSuggestions((prev) => ({
+          ...prev,
+          [prId]: existingReview.data.review_content,
+        }));
+        setSaveStatus(prev => ({ ...prev, [prId]: 'saved' }));
+        setLoading(false);
+        return;
+      }
+
+      // Generate new review
       const response = await fetch('/api/review', {
         method: 'POST',
         headers: {
@@ -64,31 +113,32 @@ export default function OpenPullRequests() {
       const data = await response.json();
       const reviewContent = data.result;
 
-      // Save the review to localStorage
-      const review = {
-        prId,
+      // Save the review to Supabase
+      setSaveStatus(prev => ({ ...prev, [prId]: 'saving' }));
+      
+      const reviewData = {
+        prId: prId.toString(),
         prTitle,
         prUrl,
         reviewContent,
-        timestamp: new Date().toISOString()
+        userEmail: session.user.email // Always use logged-in user's email
       };
 
-      // Get existing reviews
-      const existingReviews = JSON.parse(localStorage.getItem('prReviews') || '[]');
+      const saveResult = await saveReview(reviewData);
       
-      // Add new review
-      const updatedReviews = [review, ...existingReviews];
-      
-      // Save back to localStorage
-      localStorage.setItem('prReviews', JSON.stringify(updatedReviews));
-
-      setReviewSuggestions((prev) => ({
-        ...prev,
-        [prId]: reviewContent,
-      }));
+      if (saveResult.success) {
+        setSaveStatus(prev => ({ ...prev, [prId]: 'saved' }));
+        setReviewSuggestions((prev) => ({
+          ...prev,
+          [prId]: reviewContent,
+        }));
+      } else {
+        throw new Error(saveResult.error || 'Failed to save review');
+      }
     } catch (error) {
       console.error('Error fetching review suggestions:', error);
       setError(error.message || 'Failed to fetch review suggestions. Please try again.');
+      setSaveStatus(prev => ({ ...prev, [prId]: 'error' }));
       setReviewSuggestions((prev) => ({
         ...prev,
         [prId]: null,
@@ -96,6 +146,27 @@ export default function OpenPullRequests() {
     } finally {
       setLoading(false);
     }
+  }
+
+  const getButtonText = (prId) => {
+    const status = saveStatus[prId];
+    if (loading && selectedPR === prId) {
+      if (status === 'reviewing') return 'Reviewing...';
+      if (status === 'saving') return 'Saving...';
+    }
+    if (status === 'saved' || reviewSuggestions[prId]) return 'Reviewed';
+    return 'Review';
+  };
+
+  // Security check: redirect if not authenticated
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-gray-700">Please log in to view your pull requests.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -151,9 +222,9 @@ export default function OpenPullRequests() {
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            Reviewing...
+                            {getButtonText(pr.id)}
                           </span>
-                        ) : reviewSuggestions[pr.id] ? 'Reviewed' : 'Review'}
+                        ) : getButtonText(pr.id)}
                       </button>
                     </div>
                   </li>
@@ -170,7 +241,9 @@ export default function OpenPullRequests() {
             {loading && selectedPR ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600 text-lg">Analyzing pull request...</p>
+                <p className="mt-4 text-gray-600 text-lg">
+                  {saveStatus[selectedPR] === 'saving' ? 'Saving review...' : 'Analyzing pull request...'}
+                </p>
               </div>
             ) : selectedPR && reviewSuggestions[selectedPR] ? (
               <div className="space-y-6">
@@ -218,9 +291,14 @@ export default function OpenPullRequests() {
                     Download as Markdown
                   </button>
                   <button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(reviewSuggestions[selectedPR]);
-                      alert('Review copied to clipboard!');
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(reviewSuggestions[selectedPR]);
+                        alert('Review copied to clipboard!');
+                      } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        alert('Failed to copy to clipboard');
+                      }
                     }}
                     className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
                   >

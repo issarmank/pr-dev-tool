@@ -29,7 +29,7 @@ export const getUserReviews = async (userEmail) => {
     const { data, error } = await supabase
       .from('pr_reviews')
       .select('*')
-      .eq('user_email', userEmail)
+      .eq('user_email', userEmail) // Security: filter by user email
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -40,12 +40,13 @@ export const getUserReviews = async (userEmail) => {
   }
 }
 
-export const deleteReview = async (reviewId) => {
+export const deleteReview = async (reviewId, userEmail) => {
   try {
     const { error } = await supabase
       .from('pr_reviews')
       .delete()
       .eq('id', reviewId)
+      .eq('user_email', userEmail) // Security: ensure user can only delete their own
 
     if (error) throw error
     return { success: true }
@@ -61,10 +62,10 @@ export const getReviewByPrId = async (prId, userEmail) => {
       .from('pr_reviews')
       .select('*')
       .eq('pr_id', prId.toString())
-      .eq('user_email', userEmail)
+      .eq('user_email', userEmail) // Security: filter by user email
       .single()
 
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 is "not found"
+    if (error && error.code !== 'PGRST116') throw error
     return { success: true, data: data || null }
   } catch (error) {
     console.error('Error fetching review by PR ID:', error)
