@@ -1,6 +1,6 @@
 'use client';
 
-import AuthButton from './SessionProviderWrapper';
+import { SessionProvider } from 'next-auth/react';
 
 export default function ClientLayout({
   children,
@@ -8,8 +8,8 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthButton>
+    <SessionProvider>
       {children}
-    </AuthButton>
+    </SessionProvider>
   );
-} 
+}
