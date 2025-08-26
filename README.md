@@ -1,25 +1,27 @@
-PR Dev Tool
+# 🚀 PR Dev Tool
+
 An AI-powered pull request review tool that helps developers get intelligent code reviews using OpenAI's GPT models. The tool integrates with GitHub to fetch your open pull requests and provides detailed, actionable feedback on code quality, potential bugs, and best practices.
-Features
 
-🔐 GitHub OAuth Integration - Secure authentication with GitHub
-📋 Pull Request Management - View and manage your open pull requests
-🤖 AI-Powered Reviews - Get intelligent code reviews using GPT-4/GPT-3.5
-💾 Review History - Save and access past code reviews
-📱 Responsive Design - Works seamlessly on desktop and mobile
-📄 Export Options - Download reviews as Markdown or copy to clipboard
-🎨 Modern UI - Clean, intuitive interface with Tailwind CSS
+## ✨ Features
 
-Tech Stack
+- 🔐 **GitHub OAuth Integration** - Secure authentication with GitHub
+- 📋 **Pull Request Management** - View and manage your open pull requests  
+- 🤖 **AI-Powered Reviews** - Get intelligent code reviews using GPT-4/GPT-3.5
+- 💾 **Review History** - Save and access past code reviews
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
+- 📄 **Export Options** - Download reviews as Markdown or copy to clipboard
+- 🎨 **Modern UI** - Clean, intuitive interface with Tailwind CSS
 
-Frontend: Next.js 15, React 19, TypeScript
-Styling: Tailwind CSS
-Authentication: NextAuth.js with GitHub OAuth
-Database: Supabase
-AI: OpenAI API (GPT-4/GPT-3.5-turbo)
-Markdown Rendering: react-markdown
+## 🛠️ Tech Stack
 
-## Getting Started
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: NextAuth.js with GitHub OAuth
+- **Database**: Supabase
+- **AI**: OpenAI API (GPT-4/GPT-3.5-turbo)
+- **Markdown Rendering**: react-markdown
+
+## 🚀 Getting Started
 
 First, run the development server:
 
