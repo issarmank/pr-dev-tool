@@ -102,7 +102,7 @@ export default async function handler(req, res) {
       try {
         // First try with GPT-4
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4',
+          model: 'gpt-5-mini',
           messages: [
             { 
               role: "system", 
