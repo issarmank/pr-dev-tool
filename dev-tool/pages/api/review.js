@@ -110,16 +110,16 @@ export default async function handler(req, res) {
             },
             { role: "user", content: prompt }
           ],
-          max_tokens: 2000,
+          max_completion_tokens: 2000,
         });
 
         res.status(200).json({ result: completion.choices[0].message.content });
       } catch (error) {
         if (error.code === 'rate_limit_exceeded' || error.status === 429) {
-          // Fallback to GPT-3.5-turbo if GPT-4 rate limit is exceeded
-          console.log('Falling back to GPT-3.5-turbo due to rate limit');
+          // Fallback to GPT-4o-mini if GPT-4 rate limit is exceeded
+          console.log('Falling back to GPT-4o-mini due to rate limit');
           const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
+            model: 'gpt-4o-mini',
             messages: [
               { 
                 role: "system", 
